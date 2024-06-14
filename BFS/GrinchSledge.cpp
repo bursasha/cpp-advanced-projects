@@ -1,4 +1,3 @@
-#ifndef __PROGTEST__
 #include <cassert>
 #include <iostream>
 #include <memory>
@@ -17,15 +16,23 @@
 #include <stack>
 #include <queue>
 
+// ---------------------------------------------------------------------------------------------------------------------
+
 using Place = size_t;
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Structure representing the map with all the necessary details
 struct Map {
-  size_t places;
-  Place start, end;
-  std::vector<std::pair<Place, Place>> connections;
-  std::vector<std::vector<Place>> items;
+  size_t places; // Number of rooms
+  Place start, end; // Start and end rooms
+  std::vector<std::pair<Place, Place>> connections; // List of pairs of rooms describing corridors
+  std::vector<std::vector<Place>> items; // List of lists, items[i] is a list of rooms where the i-th component is located
 };
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Custom hash function for pairs to be used in unordered containers
 template < typename F, typename S >
 struct std::hash<std::pair<F, S>> {
   std::size_t operator () (const std::pair<F, S> &p) const noexcept {
@@ -34,11 +41,22 @@ struct std::hash<std::pair<F, S>> {
   }
 };
 
-#endif
+// ---------------------------------------------------------------------------------------------------------------------
 
 using namespace std;
-using State = string; using Graph = unordered_map<size_t, pair<vector<size_t>, set<size_t>>>; // vertex: items, neighbours
+using State = string;// State representation as a string
+using Graph = unordered_map<size_t, pair<vector<size_t>, set<size_t>>>; // vertex: items, neighbours
 
+// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Creates the graph from the given connections and items.
+ *
+ * @param connections List of pairs of places describing corridors
+ * @param items List of lists, items[i] is a list of rooms where the i-th component is located
+ * @return The created graph
+ */
 Graph create_graph (const vector<pair<Place, Place>> &connections, const vector<vector<Place>> &items)
 {
 	Graph graph;
@@ -51,9 +69,26 @@ Graph create_graph (const vector<pair<Place, Place>> &connections, const vector<
 	return graph;
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Updates the state by collecting items at the current vertex.
+ *
+ * @param stateActual The current state
+ * @param itemsOfVertex The items at the current vertex
+ * @return The updated state
+ */
 State create_state (const State &stateActual, const vector<size_t> &itemsOfVertex)
 { State stateNew = stateActual; for (const auto &item : itemsOfVertex) { stateNew[item] = '1'; } return stateNew; }
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Finds the shortest path in the map that collects at least one component of each type.
+ *
+ * @param map The map with rooms, connections, and items
+ * @return A list of places representing the shortest path, or an empty list if no such path exists
+ */
 list<Place> find_path(const Map &map)
 {
 	Graph graph = create_graph (map.connections, map.items);
@@ -101,9 +136,12 @@ list<Place> find_path(const Map &map)
 	return pathShortest;
 }
 
-#ifndef __PROGTEST__
+// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 using TestCase = std::pair<size_t, Map>;
+
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Class template argument deduction exists since C++17 :-)
 const std::array examples = {
@@ -129,6 +167,9 @@ const std::array examples = {
   }},
 };
 
+// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
+
 int main() {
   int fail = 0;
   for (size_t i = 0; i < examples.size(); i++) {
@@ -144,5 +185,3 @@ int main() {
 
   return 0;
 }
-
-#endif

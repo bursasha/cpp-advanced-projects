@@ -1,5 +1,3 @@
-#ifndef __PROGTEST__
-
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
@@ -21,28 +19,42 @@
 #include <variant>
 #include <vector>
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+using namespace std;
 using State = unsigned int;
 using Symbol = uint8_t;
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Structure to represent a Non-deterministic Finite Automaton (NFA)
 struct NFA {
-    std::set<State> m_States;
-    std::set<Symbol> m_Alphabet;
-    std::map<std::pair<State, Symbol>, std::set<State>> m_Transitions;
-    State m_InitialState;
-    std::set<State> m_FinalStates;
+    std::set<State> m_States; // Set of states
+    std::set<Symbol> m_Alphabet; // Set of alphabet symbols
+    std::map<std::pair<State, Symbol>, std::set<State>> m_Transitions; // Transition function
+    State m_InitialState; // Initial state
+    std::set<State> m_FinalStates; // Set of final states
 };
 
+// Structure to represent a Deterministic Finite Automaton (DFA)
 struct DFA {
-    std::set<State> m_States;
-    std::set<Symbol> m_Alphabet;
-    std::map<std::pair<State, Symbol>, State> m_Transitions;
-    State m_InitialState;
-    std::set<State> m_FinalStates;
+    std::set<State> m_States; // Set of states
+    std::set<Symbol> m_Alphabet; // Set of alphabet symbols
+    std::map<std::pair<State, Symbol>, State> m_Transitions; // Transition function
+    State m_InitialState; // Initial state
+    std::set<State> m_FinalStates; // Set of final states
 };
 
-#endif
-using namespace std;
+// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
+/**
+ * @brief Makes the given NFA complete by adding a "fail" state to handle missing transitions.
+ *
+ * @param nfa The input NFA.
+ * @param alphabetSecond The alphabet of the second NFA.
+ * @return NFA The complete NFA.
+ */
 NFA make_complete(const NFA& nfa, const set<Symbol>& alphabetSecond)
 {
 	set<Symbol> alphabetComplete = nfa.m_Alphabet; alphabetComplete.insert(alphabetSecond.begin(), alphabetSecond.end());
@@ -61,6 +73,16 @@ NFA make_complete(const NFA& nfa, const set<Symbol>& alphabetSecond)
 	return nfaComplete;
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Creates a parallel run NFA for unification or intersection.
+ *
+ * @param aComplete The first complete NFA.
+ * @param bComplete The second complete NFA.
+ * @param type True for unification, false for intersection.
+ * @return NFA The resulting NFA.
+ */
 NFA make_parallel_run(const NFA& aComplete, const NFA& bComplete, bool type)
 {
 	queue<pair<State, State>> statesToRun; // state of Union, (state of A, state of B)
@@ -116,6 +138,14 @@ NFA make_parallel_run(const NFA& aComplete, const NFA& bComplete, bool type)
 	return NFA {states, alphabet, transitions, stateInitial, statesFinal};
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Converts an NFA to a DFA.
+ *
+ * @param n The input NFA.
+ * @return DFA The resulting DFA.
+ */
 DFA make_determined(const NFA& n)
 {
 	queue<set<State>> statesToRun;
@@ -155,6 +185,14 @@ DFA make_determined(const NFA& n)
 	return DFA {states, alphabet, transitions, stateInitial, statesFinal};
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Filters the reachable states in a DFA.
+ *
+ * @param d The input DFA.
+ * @return DFA The resulting DFA with only reachable states.
+ */
 DFA make_reachable(const DFA& d)
 {
 	queue<State> statesToRun; statesToRun.push(d.m_InitialState);
@@ -186,6 +224,14 @@ DFA make_reachable(const DFA& d)
 	return DFA {states, alphabet, transitions, d.m_InitialState, statesFinal};
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Filters the useful states in a DFA.
+ *
+ * @param d The input DFA.
+ * @return DFA The resulting DFA with only useful states.
+ */
 DFA make_useful(const DFA& d)
 {
 	queue<State> statesToRun; for (const auto& s : d.m_FinalStates) statesToRun.push(s);
@@ -213,6 +259,14 @@ DFA make_useful(const DFA& d)
 	return DFA {states, alphabet, transitions, d.m_InitialState, statesFinal};
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Minimizes a DFA.
+ *
+ * @param d The input DFA.
+ * @return DFA The minimized DFA.
+*/
 DFA make_minimized(const DFA& d)
 {
 	DFA dReachable = make_reachable(d); DFA dUseful = make_useful(dReachable);
@@ -272,6 +326,15 @@ DFA make_minimized(const DFA& d)
 	return DFA {states, alphabet, transitionsMinimized, stateInitialMinimized, statesFinalMinimized};
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Computes the minimal DFA that accepts the union of languages specified by two NFAs.
+ *
+ * @param a The first NFA.
+ * @param b The second NFA.
+ * @return DFA The resulting minimal DFA for the union.
+*/
 DFA unify(const NFA& a, const NFA& b)
 {
 	NFA aComplete = make_complete(a, b.m_Alphabet), bComplete = make_complete(b, a.m_Alphabet);
@@ -280,6 +343,15 @@ DFA unify(const NFA& a, const NFA& b)
 	return uMinimized;
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Computes the minimal DFA that accepts the intersection of languages specified by two NFAs.
+ *
+ * @param a The first NFA.
+ * @param b The second NFA.
+ * @return DFA The resulting minimal DFA for the intersection.
+*/
 DFA intersect(const NFA& a, const NFA& b)
 {
 	NFA aComplete = make_complete(a, b.m_Alphabet), bComplete = make_complete(b, a.m_Alphabet);
@@ -288,13 +360,16 @@ DFA intersect(const NFA& a, const NFA& b)
 	return iMinimized;
 }
 
-#ifndef __PROGTEST__
+// ---------------------------------------------------------------------------------------------------------------------
 
 // You may need to update this function or the sample data if your state naming strategy differs.
 bool operator==(const DFA& a, const DFA& b)
 {
     return std::tie(a.m_States, a.m_Alphabet, a.m_Transitions, a.m_InitialState, a.m_FinalStates) == std::tie(b.m_States, b.m_Alphabet, b.m_Transitions, b.m_InitialState, b.m_FinalStates);
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 int main()
 {
@@ -523,6 +598,5 @@ int main()
 //	DFA d3 = intersect(d1,d2);
 //    assert(intersect(d1, d2) == d);
 
-
+	return 0;
 }
-#endif

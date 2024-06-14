@@ -1,4 +1,3 @@
-#ifndef __PROGTEST__
 #include <cassert>
 #include <iostream>
 #include <memory>
@@ -16,42 +15,118 @@
 #include <queue>
 #include <random>
 
-#endif
+// ---------------------------------------------------------------------------------------------------------------------
 
 using namespace std;
 
+// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Template class to manage best-selling products.
+ *
+ * @tparam Product The type of the product being tracked.
+ */
 template < typename Product >
 struct Bestsellers {
-	Bestsellers() : m_Shop() {}
+  /**
+   * @brief Construct a new Bestsellers object.
+   */
+  Bestsellers() : m_Shop() {}
 
-  // The total number of tracked products
+  // -------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * @brief Get the total number of tracked products.
+	 *
+	 * @return size_t The number of unique products.
+	 */
   size_t products() const { return m_Shop.get_uniques(); }
 
+	/**
+	 * @brief Register the sale of a product.
+	 *
+	 * @param p The product being sold.
+	 * @param amount The amount sold.
+	 */
   void sell(const Product& p, size_t amount) { m_Shop.insert_node(p, amount); }
 
-  // The most sold product has rank 1
+	/**
+	 * @brief Get the rank of a product based on its sales.
+	 *
+	 * @param p The product whose rank is to be retrieved.
+	 * @return size_t The rank of the product.
+	 */
   size_t rank(const Product& p) const { return m_Shop.get_rank(p); }
 
+	/**
+	 * @brief Get the product with the given rank.
+	 *
+	 * @param rank The rank of the product.
+	 * @return const Product& The product with the specified rank.
+	 */
   const Product& product(size_t rank) const { return m_Shop.get_product(rank); }
 
-  // How many copies of product with given rank were sold
+	/**
+	 * @brief Get the number of copies sold of the product with the given rank.
+	 *
+	 * @param rank The rank of the product.
+	 * @return size_t The number of copies sold.
+	 */
   size_t sold(size_t rank) const { return m_Shop.get_sold(rank); }
-  // The same but sum over interval of products (including from and to)
-  // It must hold: sold(x) == sold(x, x)
+
+	/**
+	 * @brief Get the total number of copies sold for products in the given rank interval.
+	 *
+	 * @param from The starting rank.
+	 * @param to The ending rank.
+	 * @return size_t The total number of copies sold.
+	 */
   size_t sold(size_t from, size_t to) const { return (from == to) ? m_Shop.get_sold(from) : m_Shop.get_sold(from, to); }
 
-  // Bonus only, ignore if you are not interested in bonus
-  // The smallest (resp. largest) rank with sold(rank) == sold(r)
+  // -------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * @brief Get the first rank where the number of copies sold matches the specified rank.
+	 *
+	 * @param r The rank to check.
+	 * @return size_t The first rank with the same number of copies sold.
+	 */
   size_t first_same(size_t r) const { return m_Shop.first_same_rank(r); }
+
+	/**
+	 * @brief Get the last rank where the number of copies sold matches the specified rank.
+	 *
+	 * @param r The rank to check.
+	 * @return size_t The last rank with the same number of copies sold.
+	 */
   size_t last_same(size_t r) const { return m_Shop.last_same_rank(r); }
 
+  // -------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * @brief Class to manage the tree structure of products.
+	 */
   class ProductTree {
   public:
 	  ProductTree() : m_Products(), m_Root(nullptr) {}
 	  ~ProductTree() { delete_tree(m_Root); }
 
+  	  // ---------------------------------------------------------------------------------------------------------------
+
+  		/**
+		 * @brief Get the number of unique products.
+		 *
+		 * @return size_t The number of unique products.
+		 */
 	  size_t get_uniques() const { return m_Root->m_SumNames; }
 
+  	    /**
+		 * @brief Insert a product node into the tree.
+		 *
+		 * @param name The product name.
+		 * @param count The number of units sold.
+		 */
 	  void insert_node(const Product &name, size_t count)
 	  {
 		  if (!(m_Products.count(name))) { m_Products.insert({name, count}); m_Root = insert_node(m_Root, name, count); }
@@ -62,6 +137,12 @@ struct Bestsellers {
 		  }
 	  }
 
+  		/**
+		 * @brief Get the rank of a product.
+		 *
+		 * @param name The product name.
+		 * @return size_t The rank of the product.
+		 */
 	  size_t get_rank(const Product &name) const
 	  {
 		  if (!(m_Products.count(name))) throw out_of_range("");
@@ -77,6 +158,12 @@ struct Bestsellers {
 		  return rank;
 	  }
 
+  		/**
+		 * @brief Get the product at the specified rank.
+		 *
+		 * @param rank The rank of the product.
+		 * @return const Product& The product at the specified rank.
+		 */
 	  const Product& get_product(size_t rank) const
 	  {
 		  if (rank > m_Root->m_SumNames || rank < 1) throw out_of_range("");
@@ -95,6 +182,12 @@ struct Bestsellers {
 		  return m_Products.find(product)->first;
 	  }
 
+  		/**
+	     * @brief Get the number of copies sold of the product at the specified rank.
+	     *
+	     * @param rank The rank of the product.
+		 * @return size_t The number of copies sold.
+		 */
 	  size_t get_sold(size_t rank) const
 	  {
 		  if (rank > m_Root->m_SumNames || rank < 1) throw out_of_range("");
@@ -113,6 +206,13 @@ struct Bestsellers {
 		  return sold;
 	  }
 
+  		/**
+		 * @brief Get the total number of copies sold for products in the given rank interval.
+		 *
+		 * @param from The starting rank.
+		 * @param to The ending rank.
+		 * @return size_t The total number of copies sold.
+		 */
 	  size_t get_sold(size_t from, size_t to) const
 	  {
 		  if (to > m_Root->m_SumNames || from < 1 || from > to) throw out_of_range("");
@@ -144,6 +244,12 @@ struct Bestsellers {
 		  return sold;
 	  }
 
+  		/**
+		 * @brief Get the first rank where the number of copies sold matches the specified rank.
+		 *
+		 * @param rank The rank to check.
+		 * @return size_t The first rank with the same number of copies sold.
+		 */
 	  size_t first_same_rank(size_t rank) const
 	  {
 		  if (rank > m_Root->m_SumNames || rank < 1) throw out_of_range("");
@@ -162,6 +268,12 @@ struct Bestsellers {
 		  return firstSameRank;
 	  }
 
+  		/**
+		 * @brief Get the last rank where the number of copies sold matches the specified rank.
+		 *
+		 * @param rank The rank to check.
+		 * @return size_t The last rank with the same number of copies sold.
+	 	 */
 	  size_t last_same_rank(size_t rank) const
 	  {
 		  if (rank > m_Root->m_SumNames || rank < 1) throw out_of_range("");
@@ -191,18 +303,54 @@ struct Bestsellers {
 
 	  unordered_map<Product, size_t> m_Products; ProductNode *m_Root;
 
+  	   /**
+		* @brief Delete the tree structure recursively.
+		*
+		* @param root The root node to delete.
+		*/
 	  void delete_tree(ProductNode *root) { if (m_Root) { if (root->m_Left) delete_tree(root->m_Left); if (root->m_Right) delete_tree(root->m_Right); delete root; } }
 
+  	   /**
+		* @brief Get the height of a node.
+		*
+		* @param root The node to get the height of.
+		* @return size_t The height of the node.
+		*/
 	  size_t get_height(ProductNode *root) const { return root ? root->m_Height : 0; }
+
+  	 /**
+	  * @brief Get the balance factor of a node.
+	  *
+	  * @param root The node to get the balance factor of.
+	  * @return int The balance factor of the node.
+	  */
 	  int get_balance(ProductNode *root) const { return get_height(root->m_Right) - get_height(root->m_Left); }
+
+  	   /**
+		* @brief Get the node with the minimum value.
+		*
+		* @param root The root node.
+		* @return ProductNode* The node with the minimum value.
+		*/
 	  ProductNode *get_minimum(ProductNode *root) const { return !(root->m_Left) ? root : get_minimum(root->m_Left); }
 
+  	   /**
+		* @brief Set the height of a node.
+		*
+		* @param root The node to set the height of.
+		*/
 	  void set_height(ProductNode *root)
 	  {
 		  size_t heightLeft = get_height(root->m_Left), heightRight = get_height(root->m_Right);
 		  root->m_Height = (heightRight > heightLeft ? heightRight : heightLeft) + 1;
 	  }
 
+  	   /**
+		* @brief Delete the minimum node.
+		*
+		* @param root The root node.
+		* @return ProductNode* The new root after deletion.
+		*/
 	  ProductNode *delete_minimum(ProductNode *root)
 	  {
 		  if (!(root->m_Left)) return root->m_Right;
@@ -211,6 +359,12 @@ struct Bestsellers {
 		  return balance_node(root);
 	  }
 
+  	   /**
+		* @brief Rotate the tree to the left.
+		*
+		* @param root The root node.
+		* @return ProductNode* The new root after rotation.
+		*/
 	  ProductNode *rotate_left(ProductNode *root)
 	  {
 		  ProductNode *subtreeRight = root->m_Right;
@@ -222,6 +376,12 @@ struct Bestsellers {
 		  return subtreeRight;
 	  }
 
+  	   /**
+		* @brief Rotate the tree to the right.
+		*
+		* @param root The root node.
+		* @return ProductNode* The new root after rotation.
+		*/
 	  ProductNode *rotate_right(ProductNode *root)
 	  {
 		  ProductNode *subtreeLeft = root->m_Left;
@@ -233,6 +393,11 @@ struct Bestsellers {
 		  return subtreeLeft;
 	  }
 
+  	   /**
+		* @brief Update auxiliary information for a node.
+		*
+		* @param root The node to update.
+		*/
 	  void update_auxiliary_info(ProductNode *root)
 	  {
 		  root->m_SumNames = root->m_Names.size(); root->m_SumCounts = (root->m_SumNames * root->m_Count);
@@ -240,6 +405,12 @@ struct Bestsellers {
 		  if (root->m_Right) { root->m_SumNames += root->m_Right->m_SumNames; root->m_SumCounts += root->m_Right->m_SumCounts; }
 	  }
 
+  	   /**
+		* @brief Balance the node.
+		*
+		* @param root The node to balance.
+		* @return ProductNode* The new root after balancing.
+		*/
 	  ProductNode *balance_node(ProductNode *root)
 	  {
 		  set_height(root);
@@ -259,6 +430,14 @@ struct Bestsellers {
 		  return root;
 	  }
 
+  	      /**
+		   * @brief Delete a node from the tree.
+		   *
+		   * @param root The root node.
+		   * @param name The product name.
+		   * @param count The number of units sold.
+		   * @return ProductNode* The new root after deletion.
+		   */
 	  ProductNode *delete_node(ProductNode *root, const Product &name, size_t count)
 	  {
 		  if (!root) return nullptr;
@@ -289,6 +468,14 @@ struct Bestsellers {
 		  return balance_node(root);
 	  }
 
+  	      /**
+		   * @brief Insert a node into the tree.
+		   *
+		   * @param root The root node.
+		   * @param name The product name.
+		   * @param count The number of units sold.
+		   * @return ProductNode* The new root after insertion.
+		   */
 	  ProductNode *insert_node(ProductNode *root, const Product &name, size_t count)
 	  {
 		  if (!root) return new ProductNode(name, count);
@@ -303,10 +490,10 @@ struct Bestsellers {
   };
 
   ProductTree m_Shop;
-
 };
 
-#ifndef __PROGTEST__
+// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 void test1() {
   Bestsellers<std::string> T;
@@ -330,6 +517,8 @@ void test1() {
   assert(T.sold(1, 2) == 45);
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+
 void test2() {
 # define CATCH(expr) \
   try { expr; assert(0); } catch (const std::out_of_range&) { assert(1); };
@@ -349,11 +538,10 @@ void test2() {
 #undef CATCH
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
+
 int main() {
   test1();
   test2();
 }
-
-#endif
-
-

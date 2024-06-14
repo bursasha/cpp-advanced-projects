@@ -1,4 +1,3 @@
-#ifndef __PROGTEST__
 #include <cassert>
 #include <cstdint>
 #include <iostream>
@@ -19,16 +18,36 @@
 #include <queue>
 #include <random>
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+using namespace std;
 using ChristmasTree = size_t;
 
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Structure representing the problem of distributing guardians to save gifts.
+ */
 struct TreeProblem {
-  int max_group_size;
-  std::vector<uint64_t> gifts;
-  std::vector<std::pair<ChristmasTree, ChristmasTree>> connections;
+  int max_group_size; // Maximum size of a group of guardians.
+  std::vector<uint64_t> gifts; // Vector indicating how many gifts are under each tree.
+  std::vector<std::pair<ChristmasTree, ChristmasTree>> connections; // Vector of pairs indicating connected trees.
 };
 
-#endif
-using namespace std;
+// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Recursive function to solve the problem using dynamic programming with memoization.
+ *
+ * @param streetsConns Connections between trees.
+ * @param streetsInfo Information about whether the streets are visited and whether an agent is assigned.
+ * @param streetsResults Results of the maximum gifts that can be collected with or without an agent.
+ * @param gifts Vector indicating how many gifts are under which tree.
+ * @param street Current tree being processed.
+ * @param agent Boolean indicating whether an agent is assigned to the current tree.
+ * @return Maximum number of gifts that can be collected.
+ */
 uint64_t solveRecursive(vector<vector<ChristmasTree>>& streetsConns, vector<pair<bool, bool>>& streetsInfo, vector<pair<uint64_t, uint64_t>>& streetsResults, const vector<uint64_t>& gifts, ChristmasTree street, bool agent = false)
 {
 	uint64_t giftsCount = agent ? gifts.at(street) : 0; streetsInfo.at(street).second = agent;
@@ -48,6 +67,15 @@ uint64_t solveRecursive(vector<vector<ChristmasTree>>& streetsConns, vector<pair
 	if (agent) streetsResults.at(street).first = giftsCount; else streetsResults.at(street).second = giftsCount;
 	return giftsCount;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Solves the TreeProblem to calculate the maximum number of gifts that can be saved.
+ *
+ * @param t The TreeProblem instance.
+ * @return Maximum number of gifts that can be saved.
+ */
 uint64_t solve(const TreeProblem& t)
 {
 	vector<pair<bool, bool>> streetsInfoEven(t.gifts.size(), {false,false}), streetsInfoOdd(t.gifts.size(), {false,false}); // visited, agent
@@ -56,9 +84,13 @@ uint64_t solve(const TreeProblem& t)
 	vector<pair<uint64_t, uint64_t>> streetsResults(t.gifts.size(), {0, 0}); // agent/no agent counts
 	return max(solveRecursive(streetsConns, streetsInfoEven, streetsResults, t.gifts, start, true), solveRecursive(streetsConns, streetsInfoOdd, streetsResults, t.gifts, start));
 }
-#ifndef __PROGTEST__
+
+// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 using TestCase = std::pair<uint64_t, TreeProblem>;
+
+// ---------------------------------------------------------------------------------------------------------------------
 
 const std::vector<TestCase> BASIC_TESTS = {
   { 3, { 1, { 1, 1, 1, 2 }, { {0,3}, {1,3}, {2,3} }}},
@@ -90,10 +122,14 @@ const std::vector<TestCase> BASIC_TESTS = {
   }}},
 };
 
+// ---------------------------------------------------------------------------------------------------------------------
+
 const std::vector<TestCase> BONUS_TESTS = {
   { 3, { 2, { 1, 1, 1, 2 }, { {0,3}, {1,3}, {2,3} }}},
   { 5, { 2, { 1, 1, 1, 4 }, { {0,3}, {1,3}, {2,3} }}},
 };
+
+// ---------------------------------------------------------------------------------------------------------------------
 
 void test(const std::vector<TestCase>& T) {
   int i = 0;
@@ -105,11 +141,10 @@ void test(const std::vector<TestCase>& T) {
   std::cout << "Finished" << std::endl;
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
+
 int main() {
   test(BASIC_TESTS);
   // test(BONUS_TESTS);
 }
-
-#endif
-
-
